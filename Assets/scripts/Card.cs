@@ -8,9 +8,10 @@ public class Card : MonoBehaviour
     public int location = 0; //0: deck, 1:deck_pile, 2~5: top, 6~12: bottom
     public string suit;
     public int value;
+	
     private Solitaire solitaire;
-	private UserInput user_input;
-    private bool valid_action;
+	private UIManager UIM;
+	
 	private Vector3 offset;
 	private Vector3 original_pos;
 	private int limit_bottom;
@@ -20,6 +21,8 @@ public class Card : MonoBehaviour
 	private List<string> card_list;
 	private bool movable;
 	private bool freeze_actions;
+	
+	private Transform glowing;
 
     // Start is called before the first frame update
     void Start()
@@ -32,7 +35,9 @@ public class Card : MonoBehaviour
 		movable = true;
 		freeze_actions = false;
         solitaire = FindObjectOfType<Solitaire>();
-		user_input = FindObjectOfType<UserInput>();
+		UIM = FindObjectOfType<UIManager>();
+		glowing = transform.Find("glowing");
+		
         if (CompareTag("card"))
         {
             suit = transform.name[0].ToString(); //CDHS
@@ -146,29 +151,25 @@ public class Card : MonoBehaviour
 	}
 	
 	void OnMouseUp(){
+		bool success = false;
+		bool auto = false;
 		if (!freeze_actions){
 			if (is_face_up)
 				transform.position -= new Vector3(0, 0, -5);
 			if (Vector3.Distance(original_pos, transform.position) < 0.2){
+				auto = true;
 				if (location == 0)
 				{
 					solitaire.DeckCardActions(gameObject.GetComponent<Card>());
-					user_input.click_count++;
+					success = true;
 				}
 				else
-				{
 					if (is_face_up)
-					{
-						valid_action = solitaire.AutoStack(gameObject.GetComponent<Card>());
-						if (valid_action)
-							user_input.click_count++;
-					}
-				}
+						success = solitaire.AutoStack(gameObject.GetComponent<Card>(), true);
 			}
 			else{
 				Vector3 mouse_pos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
 				RaycastHit2D[] hits = Physics2D.RaycastAll(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-				bool success = false;
 				for (int i=0; i<hits.Length; i++){
 					RaycastHit2D hit = hits[i];
 					if (hit.collider.CompareTag("card")){
@@ -196,6 +197,7 @@ public class Card : MonoBehaviour
 								solitaire.tops[num].Add(transform.name);
 								solitaire.deck_location--;
 								success = true;
+								UIM.score += 10;
 								break;
 							}
 							else if (location>5 && location<13){ //bottom
@@ -220,6 +222,7 @@ public class Card : MonoBehaviour
 									solitaire.tops[num].Add(transform.name);
 									location = num + 2;
 									success = true;
+									UIM.score += 10;
 									break;
 								}
 							}
@@ -242,6 +245,7 @@ public class Card : MonoBehaviour
 								solitaire.bottoms[num].Add(transform.name);
 								solitaire.deck_location--;
 								success = true;
+								UIM.score += 3;
 								break;
 							}
 							else if (location>1 && location<6){ //top
@@ -253,6 +257,7 @@ public class Card : MonoBehaviour
 								solitaire.bottoms[num].Add(transform.name);
 								location = num + 6;
 								success = true;
+								UIM.score -= 15;
 								break;
 							}
 							else if (location>5 && location<13){ //bottom
@@ -293,21 +298,23 @@ public class Card : MonoBehaviour
 						}
 					}
 				}
-				if (!success){
-					StartCoroutine(MoveTo(original_pos, new Vector3(0,0,0), () =>
-					{
-						if (location > 5 && location < 13){
-							for (int j = position_in_bottom + 1; j < limit_bottom; j++)
-							{
-								Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
-								card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
-							}
+			}
+			if (!success){
+				StartCoroutine(MoveTo(original_pos, new Vector3(0,0,0), () =>
+				{
+					if (location > 5 && location < 13){
+						for (int j = position_in_bottom + 1; j < limit_bottom; j++)
+						{
+							Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
+							card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
 						}
-					}));
-				}
-				else{
-					user_input.click_count++;
-				}
+					}
+					if (auto)
+						StartCoroutine(Shake());
+				}));
+			}
+			else{
+				UIM.click_count++;
 			}
 		}
 		else
@@ -317,9 +324,13 @@ public class Card : MonoBehaviour
     public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, System.Action callback = null)
     {
 		movable = false;
-        float move_period = 0.2f;
+        float move_period;
         Vector2 start_position = transform.position;
         Vector2 end_position = new Vector2(destiny.x + shift.x, destiny.y + shift.y);
+		if (Vector2.Distance(start_position, end_position) < 0.2f)
+			move_period = 0.05f;
+		else
+			move_period = 0.2f;
         for (float ratio = 0f; ratio < 1;ratio += Time.deltaTime / move_period)
         {
             transform.position = Vector2.Lerp(start_position, end_position, ratio);
@@ -356,9 +367,19 @@ public class Card : MonoBehaviour
         }
     }
 
-    public void Glow()
+    public IEnumerator Glow()
     {
-
+		for (int i=0; i<3; i++){
+			for (int j=0; j<8; j++){
+				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
+				yield return new WaitForSeconds(0.06f);
+			}
+			for (int j=0; j<8; j++){
+				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
+				yield return new WaitForSeconds(0.06f);
+			}
+		}
+		
     }
 
 }
