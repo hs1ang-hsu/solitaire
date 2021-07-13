@@ -19,8 +19,6 @@ public class Card : MonoBehaviour
 	private int face_up_num;
 	private bool is_face_up_num_find;
 	private List<string> card_list;
-	private bool movable;
-	private bool freeze_actions;
 	
 	private Transform glowing;
 
@@ -32,8 +30,7 @@ public class Card : MonoBehaviour
 		position_in_bottom = 0;
 		face_up_num = 0;
 		is_face_up_num_find = false;
-		movable = true;
-		freeze_actions = false;
+		
         solitaire = FindObjectOfType<Solitaire>();
 		UIM = FindObjectOfType<UIManager>();
 		glowing = transform.Find("glowing");
@@ -102,58 +99,58 @@ public class Card : MonoBehaviour
     }
 	
 	void OnMouseDown(){
-		if (movable){
+		if (solitaire.movable){
 			offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
 			original_pos = gameObject.transform.position;
 			offset += new Vector3(0, 0, -5);
 			
 			if (location > 5 && location < 13){ //bottom
-				limit_bottom = solitaire.bottoms[location - 6].Count;
-				position_in_bottom = limit_bottom - 1;
-				face_up_num = limit_bottom - 1;
-				is_face_up_num_find = false;
+				if (is_face_up){
+					limit_bottom = solitaire.bottoms[location - 6].Count;
+					position_in_bottom = limit_bottom - 1;
+					face_up_num = limit_bottom - 1;
+					is_face_up_num_find = false;
 
-				for (int j = 0; j < limit_bottom; j++)
-				{
-					if (is_face_up_num_find == false)
+					for (int j = 0; j < limit_bottom; j++)
+					{
+						if (is_face_up_num_find == false)
+						{
+							Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][j]);
+							if (card_tmp.GetComponent<Card>().is_face_up == true)
+							{
+								face_up_num = j;
+								is_face_up_num_find = true;
+							}
+						}
+						if (transform.GetComponent<Card>().name == solitaire.bottoms[location - 6][j])
+							position_in_bottom = j;
+					}
+					
+					card_list.Clear();
+					card_list.Add(transform.name);
+					for (int j = position_in_bottom + 1; j < limit_bottom; j++) //set the parents of the lower cards to the one we move
 					{
 						Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][j]);
-						if (card_tmp.GetComponent<Card>().is_face_up == true)
-						{
-							face_up_num = j;
-							is_face_up_num_find = true;
-						}
+						card_tmp.parent = transform;
+						card_list.Add(card_tmp.transform.name);
 					}
-					if (transform.GetComponent<Card>().name == solitaire.bottoms[location - 6][j])
-						position_in_bottom = j;
-				}
-				
-				card_list.Clear();
-				card_list.Add(transform.name);
-				for (int j = position_in_bottom + 1; j < limit_bottom; j++) //set the parents of the lower cards to the one we move
-				{
-					Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][j]);
-					card_tmp.parent = transform;
-					card_list.Add(card_tmp.transform.name);
 				}
 			}
 		}
 		else
-			freeze_actions = true;
+			solitaire.freeze_action = true;
 	}
 	
 	void OnMouseDrag(){
-		if (!freeze_actions){
-			if (is_face_up){
+		if (!solitaire.freeze_action)
+			if (is_face_up)
 				transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0)) + offset;
-			}
-		}
 	}
 	
 	void OnMouseUp(){
 		bool success = false;
 		bool auto = false;
-		if (!freeze_actions){
+		if (!solitaire.freeze_action){
 			if (is_face_up)
 				transform.position -= new Vector3(0, 0, -5);
 			if (Vector3.Distance(original_pos, transform.position) < 0.2){
@@ -300,30 +297,37 @@ public class Card : MonoBehaviour
 				}
 			}
 			if (!success){
-				StartCoroutine(MoveTo(original_pos, new Vector3(0,0,0), () =>
-				{
-					if (location > 5 && location < 13){
-						for (int j = position_in_bottom + 1; j < limit_bottom; j++)
-						{
-							Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
-							card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
+				if (is_face_up)
+					StartCoroutine(MoveTo(original_pos, new Vector3(0,0,0), () =>
+					{
+						if (auto){
+							StartCoroutine(Shake(() =>
+							{
+								if (location > 5 && location < 13){
+									for (int j = position_in_bottom + 1; j < limit_bottom; j++)
+									{
+										Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
+										card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
+									}
+								}
+								solitaire.movable = true;
+							}));
 						}
-					}
-					if (auto)
-						StartCoroutine(Shake());
-				}));
+						else
+							solitaire.movable = true;
+					}));
 			}
 			else{
 				UIM.click_count++;
 			}
 		}
 		else
-			freeze_actions = false;
+			solitaire.freeze_action = false;
 	}
 
     public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, System.Action callback = null)
     {
-		movable = false;
+		solitaire.movable = false;
         float move_period;
         Vector2 start_position = transform.position;
         Vector2 end_position = new Vector2(destiny.x + shift.x, destiny.y + shift.y);
@@ -338,33 +342,36 @@ public class Card : MonoBehaviour
             yield return null;
         }
         transform.position = destiny + shift;
-        callback?.Invoke();
-		movable = true;
+		if (callback != null)
+			callback?.Invoke();
+		else
+			solitaire.movable = true;
     }
 
-    public IEnumerator Shake()
+    public IEnumerator Shake(System.Action callback = null)
     {
-        Vector3 shaking_vector = new Vector3(0.01f, 0, 0);
-        for (int i = 0; i < 5; i++)
+        Vector3 shaking_vector = new Vector3(0.02f, 0, 0);
+        for (int i = 0; i < 3; i++)
         {
             transform.position -= shaking_vector;
             yield return new WaitForSeconds(0.01f);
         }
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 6; i++)
         {
             transform.position += shaking_vector;
             yield return new WaitForSeconds(0.01f);
         }
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 6; i++)
         {
             transform.position -= shaking_vector;
             yield return new WaitForSeconds(0.01f);
         }
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 3; i++)
         {
             transform.position += shaking_vector;
             yield return new WaitForSeconds(0.01f);
         }
+		callback?.Invoke();
     }
 
     public IEnumerator Glow()
@@ -379,7 +386,6 @@ public class Card : MonoBehaviour
 				yield return new WaitForSeconds(0.06f);
 			}
 		}
-		
     }
 
 }

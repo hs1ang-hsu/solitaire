@@ -66,10 +66,15 @@ public class UIManager : MonoBehaviour
 		return res;
 	}
 	
-	public void Hint_event(){
-		bool success = solitaire.Hint();
+	public void HintEvent(){
+		bool success = solitaire.Hint(true);
 		if (!success){
 			//new window: "no possible moves. Start new game?"
 		}
+		print(success);
+	}
+	
+	public void ResumeEvent(){
+		
 	}
 }

@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class Deck : MonoBehaviour
 {
-	Solitaire solitaire;
-	UIManager UIM;
+	private Solitaire solitaire;
+	private UIManager UIM;
+	private Transform glowing;
     // Start is called before the first frame update
     void Start()
     {
 		solitaire = FindObjectOfType<Solitaire>();
 		UIM = FindObjectOfType<UIManager>();
+		glowing = transform.Find("glowing");
     }
 
     // Update is called once per frame
@@ -29,4 +31,19 @@ public class Deck : MonoBehaviour
 			}
 		}
 	}
+	
+	public IEnumerator Glow()
+    {
+		for (int i=0; i<3; i++){
+			for (int j=0; j<8; j++){
+				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
+				yield return new WaitForSeconds(0.06f);
+			}
+			for (int j=0; j<8; j++){
+				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
+				yield return new WaitForSeconds(0.06f);
+			}
+		}
+		
+    }
 }
