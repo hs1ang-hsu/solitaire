@@ -316,6 +316,7 @@ MonoBehaviour:
   time_text: {fileID: 1098069422}
   score: 0
   click_count: 0
+  undo_count: 0
 --- !u!114 &78654828
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1005,9 +1006,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 78654828}
-        m_TargetAssemblyTypeName: Solitaire, Assembly-CSharp
-        m_MethodName: Regret
+      - m_Target: {fileID: 78654827}
+        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+        m_MethodName: UndoEvent
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2997,7 +2998,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 78654827}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: Hint_event
+        m_MethodName: HintEvent
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

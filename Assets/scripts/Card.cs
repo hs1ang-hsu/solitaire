@@ -329,8 +329,16 @@ public class Card : MonoBehaviour
 								solitaire.movable = true;
 							}));
 						}
-						else
+						else{
+							if (location > 5 && location < 13){
+								for (int j = position_in_bottom + 1; j < limit_bottom; j++)
+								{
+									Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
+									card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
+								}
+							}
 							solitaire.movable = true;
+						}
 					}));
 			}
 			else{
