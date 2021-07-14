@@ -122,7 +122,7 @@ public class Card : MonoBehaviour
 								is_face_up_num_find = true;
 							}
 						}
-						if (transform.GetComponent<Card>().name == solitaire.bottoms[location - 6][j])
+						if (transform.name == solitaire.bottoms[location - 6][j])
 							position_in_bottom = j;
 					}
 					
@@ -132,7 +132,7 @@ public class Card : MonoBehaviour
 					{
 						Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][j]);
 						card_tmp.parent = transform;
-						card_list.Add(card_tmp.transform.name);
+						card_list.Add(card_tmp.name);
 					}
 				}
 			}
@@ -184,7 +184,9 @@ public class Card : MonoBehaviour
 						}
 						
 						if (value == 1){
-							if (location == 1){ //deck_pile
+							if (location == 1){ //deck_pile to top
+								solitaire.undo_stack.Push(new string[] {(num+2).ToString(), transform.name, location.ToString(), "0"});
+								
 								Vector3 shift = new Vector3(0, 0, -0.2f);
 								StartCoroutine(MoveTo(solitaire.top_pos[num].transform.position, shift));
 								transform.parent = solitaire.top_pos[num].transform;
@@ -194,21 +196,26 @@ public class Card : MonoBehaviour
 								solitaire.tops[num].Add(transform.name);
 								solitaire.deck_location--;
 								success = true;
+								
 								UIM.score += 10;
 								break;
 							}
-							else if (location>5 && location<13){ //bottom
+							else if (location>5 && location<13){ //bottom to top
 								if (value == 1)
 								{
 									//Turn up the face of the upper card.
+									bool is_flip = false;
 									if (face_up_num == position_in_bottom)
 									{
 										if (position_in_bottom != 0)
 										{
 											Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][position_in_bottom - 1]);
 											card_tmp.GetComponent<Card>().is_face_up = true;
+											is_flip = true;
 										}
 									}
+									
+									solitaire.undo_stack.Push(new string[] {(num+2).ToString(), transform.name, location.ToString(), is_flip?"1":"0"});
 
 									//Moving
 									Vector3 shift = new Vector3(0, 0, -0.2f);
@@ -232,7 +239,9 @@ public class Card : MonoBehaviour
 						}
 						
 						if (value == 13){
-							if (location == 1){ //deck_pile
+							if (location == 1){ //deck_pile to bottom
+								solitaire.undo_stack.Push(new string[] {(num+6).ToString(), transform.name, location.ToString(), "0"});
+								
 								Vector3 shift = new Vector3(0, 0, -0.2f);
 								StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift));
 								transform.parent = solitaire.bottom_pos[num].transform;
@@ -245,7 +254,9 @@ public class Card : MonoBehaviour
 								UIM.score += 3;
 								break;
 							}
-							else if (location>1 && location<6){ //top
+							else if (location>1 && location<6){ //top to bottom
+								solitaire.undo_stack.Push(new string[] {(num+6).ToString(), transform.name, location.ToString(), "0"});
+								
 								Vector3 shift = new Vector3(0, 0, -0.2f);
 								StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift));
 								transform.parent = solitaire.bottom_pos[num].transform;
@@ -261,14 +272,18 @@ public class Card : MonoBehaviour
 								if (value == 13)
 								{
 									//Turn up the face of the upper card.
+									bool is_flip = false;
 									if (face_up_num == position_in_bottom)
 									{
 										if (position_in_bottom != 0)
 										{
 											Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][position_in_bottom - 1]);
 											card_tmp.GetComponent<Card>().is_face_up = true;
+											is_flip = true;
 										}
 									}
+									
+									solitaire.undo_stack.Push(new string[] {(num+6).ToString(), transform.name, location.ToString(), is_flip?"1":"0"});
 
 									Vector3 shift = new Vector3(0, 0, -0.2f);
 									StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift, () =>
@@ -287,6 +302,7 @@ public class Card : MonoBehaviour
 											solitaire.bottoms[num].Add(card);
 										}
 										location = num + 6;
+										solitaire.movable = true;
 									}));
 									success = true;
 									break;
@@ -319,6 +335,7 @@ public class Card : MonoBehaviour
 			}
 			else{
 				UIM.click_count++;
+				UIM.undo_count += (UIM.undo_count<15)?1:0;
 			}
 		}
 		else

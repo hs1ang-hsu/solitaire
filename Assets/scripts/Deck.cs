@@ -28,6 +28,8 @@ public class Deck : MonoBehaviour
 			if (hit.collider.transform.name == "deck_bottom"){
 				solitaire.DeckRestack();
 				UIM.score -= 10;
+				UIM.click_count++;
+				UIM.undo_count += (UIM.undo_count<15)?1:0;
 			}
 		}
 	}
@@ -44,6 +46,5 @@ public class Deck : MonoBehaviour
 				yield return new WaitForSeconds(0.06f);
 			}
 		}
-		
     }
 }

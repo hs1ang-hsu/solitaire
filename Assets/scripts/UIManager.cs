@@ -11,8 +11,10 @@ public class UIManager : MonoBehaviour
 	
 	public int score;
     public int click_count;
+	public int undo_count;
     private float time;
     private bool game_start;
+	private bool undo_delay;
 	
 	private Solitaire solitaire;
 
@@ -21,8 +23,10 @@ public class UIManager : MonoBehaviour
     {
 		score = 0;
         click_count = 0;
+		undo_count = 0;
         time = 0;
         game_start = false;
+		undo_delay = false;
 		
         solitaire = FindObjectOfType<Solitaire>();
     }
@@ -71,10 +75,24 @@ public class UIManager : MonoBehaviour
 		if (!success){
 			//new window: "no possible moves. Start new game?"
 		}
-		print(success);
+		//print(success);
 	}
 	
-	public void ResumeEvent(){
-		
+	public void UndoEvent(){
+		if (!undo_delay){
+			undo_delay = true;
+			if (click_count != 0 && undo_count != 0){
+				solitaire.Undo();
+				undo_count--;
+				click_count++;
+			}
+			StartCoroutine(Stop(()=>{undo_delay = false;}));
+		}
 	}
+	
+	private IEnumerator Stop(System.Action callback = null)
+    {
+		yield return new WaitForSeconds(0.2f);
+		callback?.Invoke();
+    }
 }
