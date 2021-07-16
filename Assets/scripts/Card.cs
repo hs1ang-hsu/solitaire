@@ -18,6 +18,7 @@ public class Card : MonoBehaviour
 	private int position_in_bottom;
 	private int face_up_num;
 	private bool is_face_up_num_find;
+	private bool moving;
 	private List<string> card_list;
 	
 	private Transform glowing;
@@ -30,6 +31,7 @@ public class Card : MonoBehaviour
 		position_in_bottom = 0;
 		face_up_num = 0;
 		is_face_up_num_find = false;
+		moving = false;
 		
         solitaire = FindObjectOfType<Solitaire>();
 		UIM = FindObjectOfType<UIManager>();
@@ -357,6 +359,7 @@ public class Card : MonoBehaviour
     public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, System.Action callback = null)
     {
 		solitaire.movable = false;
+		moving = true;
         float move_period;
         Vector2 start_position = transform.position;
         Vector2 end_position = new Vector2(destiny.x + shift.x, destiny.y + shift.y);
@@ -375,6 +378,7 @@ public class Card : MonoBehaviour
 			callback?.Invoke();
 		else
 			solitaire.movable = true;
+		moving = false;
     }
 
     public IEnumerator Shake(System.Action callback = null)
@@ -408,12 +412,18 @@ public class Card : MonoBehaviour
 		for (int i=0; i<3; i++){
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
+				if (moving)
+					break;
 				yield return new WaitForSeconds(0.06f);
 			}
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
+				if (moving)
+					break;
 				yield return new WaitForSeconds(0.06f);
 			}
+			if (moving)
+				break;
 		}
     }
 

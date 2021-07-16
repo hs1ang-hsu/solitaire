@@ -158,5 +158,15 @@ public class UIManager : MonoBehaviour
 		if (click_count < 300)
 			res += (300 - click_count) * 2;
 		score_result_text.text = res.ToString();
+		Leaderboard[] leaderboard = solitaire.player_data.leaderboard;
+		Leaderboard result = new Leaderboard() {score=score, time=(int)time, click_count=click_count};
+		for (int i=0; i<10; i++){
+			if (result > leaderboard[i]){
+				for (int j=9; j>i; j--)
+					leaderboard[j].assign(leaderboard[j-1]);
+				leaderboard[i].assign(result);
+				break;
+			}
+		}
 	}
 }
