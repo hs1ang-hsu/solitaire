@@ -8,6 +8,14 @@ public class UIManager : MonoBehaviour
 	public Text score_text;
 	public Text click_count_text;
 	public Text time_text;
+	public Text score_result_text;
+	
+	public Button menu_button;
+	public Button resume_button;
+	public Button hint_button;
+	
+	public GameObject restart_menu;
+	public GameObject end_game_menu;
 	
 	public int score;
     public int click_count;
@@ -15,6 +23,8 @@ public class UIManager : MonoBehaviour
     private float time;
     private bool game_start;
 	private bool undo_delay;
+	public bool hint_delay;
+	private bool game_paused;
 	
 	private Solitaire solitaire;
 
@@ -27,6 +37,8 @@ public class UIManager : MonoBehaviour
         time = 0;
         game_start = false;
 		undo_delay = false;
+		hint_delay = false;
+		game_paused = false;
 		
         solitaire = FindObjectOfType<Solitaire>();
     }
@@ -36,18 +48,18 @@ public class UIManager : MonoBehaviour
     {
 		if (score < 0)
 			score = 0;
-        if (game_start == false)
-        {
-            if (click_count > 0)
-            {
-                game_start = true;
-                time += Time.deltaTime;
-            }
-        }
-        else
-        {
-            time += Time.deltaTime;
-        }
+		if (!game_paused){
+			if (game_start == false)
+			{
+				if (click_count > 0)
+				{
+					game_start = true;
+					time += Time.deltaTime;
+				}
+			}
+			else
+				time += Time.deltaTime;
+		}
 		score_text.text = score.ToString();
 		click_count_text.text = click_count.ToString();
 		time_text.text = Time2String();
@@ -71,11 +83,15 @@ public class UIManager : MonoBehaviour
 	}
 	
 	public void HintEvent(){
-		bool success = solitaire.Hint(true);
-		if (!success){
-			//new window: "no possible moves. Start new game?"
+		if (!hint_delay){
+			hint_delay = true;
+			bool success = solitaire.Hint(true);
+			if (!success){
+				restart_menu.SetActive(true);
+				Pause();
+			}
+			StartCoroutine(Stop(2f, ()=>{hint_delay = false;}));
 		}
-		//print(success);
 	}
 	
 	public void UndoEvent(){
@@ -86,13 +102,61 @@ public class UIManager : MonoBehaviour
 				undo_count--;
 				click_count++;
 			}
-			StartCoroutine(Stop(()=>{undo_delay = false;}));
+			StartCoroutine(Stop(0.3f, ()=>{undo_delay = false;}));
 		}
 	}
 	
-	private IEnumerator Stop(System.Action callback = null)
+	private IEnumerator Stop(float delay_time, System.Action callback = null)
     {
-		yield return new WaitForSeconds(0.2f);
+		yield return new WaitForSeconds(delay_time);
 		callback?.Invoke();
     }
+	
+	public void Pause(){
+		if (!game_paused){
+			solitaire.movable = false;
+			game_paused = true;
+			menu_button.interactable = false;
+			resume_button.interactable = false;
+			hint_button.interactable = false;
+		}
+	}
+	
+	public void Resume(){
+		if (game_paused){
+			solitaire.movable = true;
+			game_paused = false;
+			menu_button.interactable = true;
+			resume_button.interactable = true;
+			hint_button.interactable = true;
+		}
+	}
+	
+	public void NewGame(){
+		if (game_paused){
+			solitaire.Initialize();
+			score = 0;
+			click_count = 0;
+			undo_count = 0;
+			time = 0;
+			game_start = false;
+			undo_delay = false;
+			hint_delay = false;
+			game_paused = false;
+			menu_button.interactable = true;
+			resume_button.interactable = true;
+			hint_button.interactable = true;
+		}
+	}
+	
+	public void EndGame(){
+		end_game_menu.SetActive(true);
+		Pause();
+		int res = score;
+		if (time < 300)
+			res += (300 - (int)time) * 2;
+		if (click_count < 300)
+			res += (300 - click_count) * 2;
+		score_result_text.text = res.ToString();
+	}
 }

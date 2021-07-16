@@ -37,13 +37,13 @@ public class Deck : MonoBehaviour
 	public IEnumerator Glow()
     {
 		for (int i=0; i<3; i++){
-			for (int j=0; j<8; j++){
-				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
-				yield return new WaitForSeconds(0.06f);
+			for (int j=0; j<6; j++){
+				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.15f);
+				yield return new WaitForSeconds(0.05f);
 			}
-			for (int j=0; j<8; j++){
-				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
-				yield return new WaitForSeconds(0.06f);
+			for (int j=0; j<6; j++){
+				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.15f);
+				yield return new WaitForSeconds(0.05f);
 			}
 		}
     }

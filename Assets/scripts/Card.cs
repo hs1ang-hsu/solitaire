@@ -344,6 +344,10 @@ public class Card : MonoBehaviour
 			else{
 				UIM.click_count++;
 				UIM.undo_count += (UIM.undo_count<15)?1:0;
+				UIM.hint_delay = false;
+				
+				if(solitaire.is_game_end())
+					UIM.EndGame();
 			}
 		}
 		else

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class Solitaire : MonoBehaviour
@@ -38,12 +39,18 @@ public class Solitaire : MonoBehaviour
 	
     private UIManager UIM;
 	private int hint_position = 0;
+	private bool bottom_to_top = false;
 	
 	public Stack<string[]> undo_stack = new Stack<string[]>();
+	
+	public PlayerData player_data;
+	public DataIO data_io;
 
     // Start is called before the first frame update
     void Start()
     {
+		player_data = data_io.LoadPlayerData();
+		
 		movable = false;
 		freeze_action = true;
 		UIM = FindObjectOfType<UIManager>();
@@ -330,6 +337,8 @@ public class Solitaire : MonoBehaviour
 								UIM.score += 10;
 								undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
 							}
+							else
+								bottom_to_top = true;
                             return true;
                         }
                     }
@@ -369,6 +378,8 @@ public class Solitaire : MonoBehaviour
 									UIM.score += 10;
 									undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
 								}
+								else
+									bottom_to_top = true;
                                 return true;
                             }
                         }
@@ -422,6 +433,8 @@ public class Solitaire : MonoBehaviour
 									undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
 								}));
 							}
+							else
+								bottom_to_top = false;
                             return true;
                         }
                     }
@@ -485,6 +498,8 @@ public class Solitaire : MonoBehaviour
 										undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
 									}));
 								}
+								else
+									bottom_to_top = false;
                                 return true;
                             }
                         }
@@ -864,6 +879,7 @@ public class Solitaire : MonoBehaviour
 		Card tmp_card;
 		
 		for (int i=0; i<7; i++){
+			bool is_last = false;
 			for (int j=0; j<bottoms[i].Count; j++){
 				tmp_card = bottom_pos[i].transform.Find(bottoms[i][j]).GetComponent<Card>();
 				if (!tmp_card.is_face_up)
@@ -878,7 +894,17 @@ public class Solitaire : MonoBehaviour
 							StartCoroutine(tmp_card.Glow());
 						return true;
 					}
+					if (j == bottoms[i].Count-1)
+						is_last = true;
 					break;
+				}
+			}
+			if (!is_last && bottoms[i].Count != 0){
+				tmp_card = bottom_pos[i].transform.Find(bottoms[i][bottoms[i].Count-1]).GetComponent<Card>();
+				valid_action = AutoStack(tmp_card, false);
+				if (bottom_to_top && valid_action){
+					StartCoroutine(tmp_card.Glow());
+					return true;
 				}
 			}
 		}
@@ -894,13 +920,13 @@ public class Solitaire : MonoBehaviour
 		}
 		
 		if (deck.Count != 0){
-			Card deck_glow_card = deck_pos.transform.Find(deck[0]).GetComponent<Card>();
+			Deck deck_glow = deck_pos.transform.GetComponent<Deck>();
 			for (int i=deck_pile.Count-2; i>=0; i--){
 				tmp_card = deck_pile_pos.transform.Find(deck_pile[i]).GetComponent<Card>();
 				valid_action = AutoStack(tmp_card, false);
 				if (valid_action){
 					if (allow_second_check)
-						StartCoroutine(deck_glow_card.Glow());
+						StartCoroutine(deck_glow.Glow());
 					return true;
 				}
 			}
@@ -909,19 +935,19 @@ public class Solitaire : MonoBehaviour
 				valid_action = AutoStack(tmp_card, false);
 				if (valid_action){
 					if (allow_second_check)
-						StartCoroutine(deck_glow_card.Glow());
+						StartCoroutine(deck_glow.Glow());
 					return true;
 				}
 			}
 		}
 		else{
-			Deck deck_glow_card = deck_pos.transform.GetComponent<Deck>();
+			Deck deck_glow = deck_pos.transform.GetComponent<Deck>();
 			for (int i=deck_pile.Count-2; i>=0; i--){
 				tmp_card = deck_pile_pos.transform.Find(deck_pile[i]).GetComponent<Card>();
 				valid_action = AutoStack(tmp_card, false);
 				if (valid_action){
 					if (allow_second_check)
-						StartCoroutine(deck_glow_card.Glow());
+						StartCoroutine(deck_glow.Glow());
 					return true;
 				}
 			}
@@ -930,7 +956,7 @@ public class Solitaire : MonoBehaviour
 				valid_action = AutoStack(tmp_card, false);
 				if (valid_action){
 					if (allow_second_check)
-						StartCoroutine(deck_glow_card.Glow());
+						StartCoroutine(deck_glow.Glow());
 					return true;
 				}
 			}
@@ -954,7 +980,7 @@ public class Solitaire : MonoBehaviour
 						tops[i].Add(tmp_card.name);
 						bottoms[hint_position].Remove(tmp_card.name);
 						
-						if (second_check){
+						if (second_check && !bottom_to_top){
 							StartCoroutine(tmp_card.Glow());
 							return true;
 						}
@@ -1095,4 +1121,41 @@ public class Solitaire : MonoBehaviour
 			}
 		}
     }
+	
+	public void Initialize(){
+		foreach(string name in deck)
+			Destroy(deck_pos.transform.Find(name).gameObject);
+		deck.Clear();
+		
+		foreach(string name in deck_pile)
+			Destroy(deck_pile_pos.transform.Find(name).gameObject);
+		deck_pile.Clear();
+		
+		for (int i=0; i<4; i++){
+			foreach(string name in tops[i])
+				Destroy(top_pos[i].transform.Find(name).gameObject);
+			tops[i].Clear();
+		}
+		for (int i=0; i<7; i++){
+			foreach(string name in bottoms[i])
+				Destroy(bottom_pos[i].transform.Find(name).gameObject);
+			bottoms[i].Clear();
+		}
+		undo_stack.Clear();
+		
+		movable = false;
+		freeze_action = true;
+		PlayCards();
+	}
+	
+	public bool is_game_end(){
+		if (deck.Count != 0)
+			return false;
+		if (deck_pile.Count != 0)
+			return false;
+		for (int i=0; i<7; i++)
+			if (bottoms[i].Count != 0)
+				return false;
+		return true;
+	}
 }
