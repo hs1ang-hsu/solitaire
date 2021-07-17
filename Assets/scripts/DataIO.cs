@@ -17,11 +17,12 @@ public class DataIO : MonoBehaviour
 			}
 		}
 		else{
-			print("write new.");
-			TextAsset text = Resources.Load<TextAsset>(file_name);
-			string json_text = text.ToString();
+			//print("write new.");
+			//TextAsset text = Resources.Load<TextAsset>(file_name);
+			//string json_text = text.ToString();
 			player_data = new PlayerData();
 			player_data.card_back_pref = 0;
+			player_data.sound_effect_volume = 0f;
 			player_data.leaderboard = new Leaderboard[10];
 			for (int i=0; i<10; i++)
 				player_data.leaderboard[i] = new Leaderboard() {score=0, time=0, click_count=0};

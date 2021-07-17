@@ -41,6 +41,8 @@ public class Solitaire : MonoBehaviour
 	private int hint_position = 0;
 	private bool bottom_to_top = false;
 	
+	private AudioManager AM;
+	
 	public Stack<string[]> undo_stack = new Stack<string[]>();
 	
 	public PlayerData player_data;
@@ -54,6 +56,9 @@ public class Solitaire : MonoBehaviour
 		movable = false;
 		freeze_action = true;
 		UIM = FindObjectOfType<UIManager>();
+		UIM.audio_mixer.SetFloat("sound_effect", player_data.sound_effect_volume);
+		UIM.slider.value = player_data.sound_effect_volume;
+		AM = FindObjectOfType<AudioManager>();
         bottoms = new List<string>[] { bottom0, bottom1, bottom2, bottom3, bottom4, bottom5, bottom6 };
         tops = new List<string>[] { top0, top1, top2, top3 };
         PlayCards();
@@ -108,13 +113,14 @@ public class Solitaire : MonoBehaviour
 
     IEnumerator SolitaireDeal(System.Action callback = null)
     {
+		AM.Play("card_deal");
         for (int i=0; i<7; i++)
         {
             float y_offset = 0;
             float z_offset = 0.2f;
             foreach (string card in bottoms[i])
             {
-                yield return new WaitForSeconds(0.01f);
+                yield return new WaitForSeconds(0.03f);
                 GameObject new_card = Instantiate(card_prefab, new Vector3(bottom_pos[i].transform.position.x, bottom_pos[i].transform.position.y - y_offset, bottom_pos[i].transform.position.z - z_offset), Quaternion.identity, bottom_pos[i].transform);
                 new_card.name = card;
                 new_card.GetComponent<Card>().location = i + 6;
@@ -128,6 +134,7 @@ public class Solitaire : MonoBehaviour
                 deck_pile.Add(card);
             }
         }
+		AM.Play("card_stack");
         foreach (string card in deck_pile)
         {
             if (deck.Contains(card))

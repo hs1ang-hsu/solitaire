@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Audio;
 
 public class UIManager : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public class UIManager : MonoBehaviour
 	public Button menu_button;
 	public Button resume_button;
 	public Button hint_button;
+	
+	public AudioMixer audio_mixer;
+	
+	public Slider slider;
 	
 	public GameObject restart_menu;
 	public GameObject end_game_menu;
@@ -41,6 +46,7 @@ public class UIManager : MonoBehaviour
 		game_paused = false;
 		
         solitaire = FindObjectOfType<Solitaire>();
+		//print(solitaire.player_data.sound_effect_volume);
     }
 
     // Update is called once per frame
@@ -165,8 +171,15 @@ public class UIManager : MonoBehaviour
 				for (int j=9; j>i; j--)
 					leaderboard[j].assign(leaderboard[j-1]);
 				leaderboard[i].assign(result);
+				solitaire.data_io.WritePlayerData(solitaire.player_data);
 				break;
 			}
 		}
+	}
+	
+	public void SetSoundEffectVolume (float sound_effect_volume){
+		audio_mixer.SetFloat("sound_effect", sound_effect_volume);
+		solitaire.player_data.sound_effect_volume = sound_effect_volume;
+		solitaire.data_io.WritePlayerData(solitaire.player_data);
 	}
 }

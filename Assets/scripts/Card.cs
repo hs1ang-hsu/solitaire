@@ -11,6 +11,7 @@ public class Card : MonoBehaviour
 	
     private Solitaire solitaire;
 	private UIManager UIM;
+	private AudioManager AM;
 	
 	private Vector3 offset;
 	private Vector3 original_pos;
@@ -35,6 +36,7 @@ public class Card : MonoBehaviour
 		
         solitaire = FindObjectOfType<Solitaire>();
 		UIM = FindObjectOfType<UIManager>();
+		AM = FindObjectOfType<AudioManager>();
 		glowing = transform.Find("glowing");
 		
         if (CompareTag("card"))
@@ -344,6 +346,7 @@ public class Card : MonoBehaviour
 					}));
 			}
 			else{
+				AM.Play("card_move");
 				UIM.click_count++;
 				UIM.undo_count += (UIM.undo_count<15)?1:0;
 				UIM.hint_delay = false;
@@ -383,6 +386,7 @@ public class Card : MonoBehaviour
 
     public IEnumerator Shake(System.Action callback = null)
     {
+		AM.Play("card_shake");
         Vector3 shaking_vector = new Vector3(0.02f, 0, 0);
         for (int i = 0; i < 3; i++)
         {
@@ -412,18 +416,22 @@ public class Card : MonoBehaviour
 		for (int i=0; i<3; i++){
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
-				if (moving)
-					break;
+				if (moving){
+					glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, glowing.GetComponent<SpriteRenderer>().color.a);
+					yield break;
+				}
 				yield return new WaitForSeconds(0.06f);
 			}
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
-				if (moving)
-					break;
+				if (moving){
+					glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, glowing.GetComponent<SpriteRenderer>().color.a);
+					yield break;
+				}
 				yield return new WaitForSeconds(0.06f);
 			}
 			if (moving)
-				break;
+				yield break;
 		}
     }
 
