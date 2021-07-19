@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
-	public Text score_text;
-	public Text click_count_text;
-	public Text time_text;
-	public Text score_result_text;
+	public TMP_Text[] game_text;
+	public TMP_Text[] result_text;
+	public TMP_Text[] best_result_text;
+	public TMP_Text[] leaderboard_score;
+	public TMP_Text[] leaderboard_time;
+	public TMP_Text[] leaderboard_click_count;
 	
 	public Button menu_button;
 	public Button resume_button;
@@ -21,6 +24,7 @@ public class UIManager : MonoBehaviour
 	
 	public GameObject restart_menu;
 	public GameObject end_game_menu;
+	public GameObject auto_complete_menu;
 	
 	public int score;
     public int click_count;
@@ -66,14 +70,14 @@ public class UIManager : MonoBehaviour
 			else
 				time += Time.deltaTime;
 		}
-		score_text.text = score.ToString();
-		click_count_text.text = click_count.ToString();
-		time_text.text = Time2String();
+		game_text[0].text = score.ToString();
+		game_text[1].text = Time2String(time);
+		game_text[2].text = click_count.ToString();
     }
 	
-    string Time2String(){
-		int minute = (int)System.Math.Floor(time/60);
-		int second = (int)System.Math.Floor(time) % 60;
+    string Time2String(float t){
+		int minute = (int)System.Math.Floor(t/60);
+		int second = (int)System.Math.Floor(t) % 60;
 		string res;
 		if (minute < 10)
 			res = "0" + minute;
@@ -120,7 +124,7 @@ public class UIManager : MonoBehaviour
 	
 	public void Pause(){
 		if (!game_paused){
-			solitaire.movable = false;
+			solitaire.global_freeze = true;
 			game_paused = true;
 			menu_button.interactable = false;
 			resume_button.interactable = false;
@@ -130,7 +134,7 @@ public class UIManager : MonoBehaviour
 	
 	public void Resume(){
 		if (game_paused){
-			solitaire.movable = true;
+			solitaire.global_freeze = false;
 			game_paused = false;
 			menu_button.interactable = true;
 			resume_button.interactable = true;
@@ -163,9 +167,13 @@ public class UIManager : MonoBehaviour
 			res += (300 - (int)time) * 2;
 		if (click_count < 300)
 			res += (300 - click_count) * 2;
-		score_result_text.text = res.ToString();
+		
+		result_text[0].text = res.ToString();
+		result_text[1].text = Time2String(time);
+		result_text[2].text = click_count.ToString();
+		
 		Leaderboard[] leaderboard = solitaire.player_data.leaderboard;
-		Leaderboard result = new Leaderboard() {score=score, time=(int)time, click_count=click_count};
+		Leaderboard result = new Leaderboard() {score=res, time=(int)time, click_count=click_count};
 		for (int i=0; i<10; i++){
 			if (result > leaderboard[i]){
 				for (int j=9; j>i; j--)
@@ -175,11 +183,40 @@ public class UIManager : MonoBehaviour
 				break;
 			}
 		}
+		
+		best_result_text[0].text = leaderboard[0].score.ToString();
+		best_result_text[1].text = Time2String(leaderboard[0].time);
+		best_result_text[2].text = leaderboard[0].click_count.ToString();
+	}
+	
+	public void CallAutoCompleteMenu(){
+		auto_complete_menu.SetActive(true);
+	}
+	
+	public void AutoComplete(){
+		solitaire.AutoComplete();
+	}
+	
+	public void GenerateLeaderboard(){
+		Leaderboard[] leaderboard = solitaire.player_data.leaderboard;
+		for (int i=0; i<10; i++){
+			leaderboard_score[i].text = leaderboard[i].score.ToString();
+			leaderboard_time[i].text = Time2String(leaderboard[i].time);
+			leaderboard_click_count[i].text = leaderboard[i].click_count.ToString();
+		}
 	}
 	
 	public void SetSoundEffectVolume (float sound_effect_volume){
 		audio_mixer.SetFloat("sound_effect", sound_effect_volume);
 		solitaire.player_data.sound_effect_volume = sound_effect_volume;
 		solitaire.data_io.WritePlayerData(solitaire.player_data);
+	}
+	
+	public void debug(){
+		for (int i=0; i<7; i++){
+			print($"bottom {i}");
+			foreach(string card in solitaire.bottoms[i])
+				print(card);
+		}
 	}
 }

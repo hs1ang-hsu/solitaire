@@ -17,9 +17,10 @@ public class Card : MonoBehaviour
 	private Vector3 original_pos;
 	private int limit_bottom;
 	private int position_in_bottom;
+	private bool movable;
+	private bool freeze_action;
 	private int face_up_num;
 	private bool is_face_up_num_find;
-	private bool moving;
 	private List<string> card_list;
 	
 	private Transform glowing;
@@ -30,9 +31,10 @@ public class Card : MonoBehaviour
 		card_list = new List<string>();
 		limit_bottom = 0;
 		position_in_bottom = 0;
+		movable = true;
+		freeze_action = false;
 		face_up_num = 0;
 		is_face_up_num_find = false;
-		moving = false;
 		
         solitaire = FindObjectOfType<Solitaire>();
 		UIM = FindObjectOfType<UIManager>();
@@ -103,7 +105,7 @@ public class Card : MonoBehaviour
     }
 	
 	void OnMouseDown(){
-		if (solitaire.movable){
+		if (movable && !solitaire.global_freeze){
 			offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
 			original_pos = gameObject.transform.position;
 			offset += new Vector3(0, 0, -5);
@@ -142,11 +144,11 @@ public class Card : MonoBehaviour
 			}
 		}
 		else
-			solitaire.freeze_action = true;
+			freeze_action = true;
 	}
 	
 	void OnMouseDrag(){
-		if (!solitaire.freeze_action)
+		if (!freeze_action)
 			if (is_face_up)
 				transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0)) + offset;
 	}
@@ -154,7 +156,7 @@ public class Card : MonoBehaviour
 	void OnMouseUp(){
 		bool success = false;
 		bool auto = false;
-		if (!solitaire.freeze_action){
+		if (!freeze_action){
 			if (is_face_up)
 				transform.position -= new Vector3(0, 0, -5);
 			if (Vector3.Distance(original_pos, transform.position) < 0.2){
@@ -306,7 +308,6 @@ public class Card : MonoBehaviour
 											solitaire.bottoms[num].Add(card);
 										}
 										location = num + 6;
-										solitaire.movable = true;
 									}));
 									success = true;
 									break;
@@ -330,7 +331,6 @@ public class Card : MonoBehaviour
 										card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
 									}
 								}
-								solitaire.movable = true;
 							}));
 						}
 						else{
@@ -341,7 +341,6 @@ public class Card : MonoBehaviour
 									card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
 								}
 							}
-							solitaire.movable = true;
 						}
 					}));
 			}
@@ -351,18 +350,19 @@ public class Card : MonoBehaviour
 				UIM.undo_count += (UIM.undo_count<15)?1:0;
 				UIM.hint_delay = false;
 				
-				if(solitaire.is_game_end())
+				if(solitaire.IsGameEnd())
 					UIM.EndGame();
+				if(solitaire.IsCardAllFaceUp())
+					UIM.CallAutoCompleteMenu();
 			}
 		}
 		else
-			solitaire.freeze_action = false;
+			freeze_action = false;
 	}
 
     public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, System.Action callback = null)
     {
-		solitaire.movable = false;
-		moving = true;
+		movable = false;
         float move_period;
         Vector2 start_position = transform.position;
         Vector2 end_position = new Vector2(destiny.x + shift.x, destiny.y + shift.y);
@@ -377,11 +377,8 @@ public class Card : MonoBehaviour
             yield return null;
         }
         transform.position = destiny + shift;
-		if (callback != null)
-			callback?.Invoke();
-		else
-			solitaire.movable = true;
-		moving = false;
+		callback?.Invoke();
+		movable = true;
     }
 
     public IEnumerator Shake(System.Action callback = null)
@@ -416,7 +413,7 @@ public class Card : MonoBehaviour
 		for (int i=0; i<3; i++){
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
-				if (moving){
+				if (!movable){
 					glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, glowing.GetComponent<SpriteRenderer>().color.a);
 					yield break;
 				}
@@ -424,13 +421,13 @@ public class Card : MonoBehaviour
 			}
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
-				if (moving){
+				if (!movable){
 					glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, glowing.GetComponent<SpriteRenderer>().color.a);
 					yield break;
 				}
 				yield return new WaitForSeconds(0.06f);
 			}
-			if (moving)
+			if (!movable)
 				yield break;
 		}
     }
