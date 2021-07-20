@@ -111,6 +111,7 @@ public class UIManager : MonoBehaviour
 				solitaire.Undo();
 				undo_count--;
 				click_count++;
+				score -= 10;
 			}
 			StartCoroutine(Stop(0.3f, ()=>{undo_delay = false;}));
 		}
@@ -191,10 +192,31 @@ public class UIManager : MonoBehaviour
 	
 	public void CallAutoCompleteMenu(){
 		auto_complete_menu.SetActive(true);
+		solitaire.global_freeze = true;
 	}
 	
 	public void AutoComplete(){
-		solitaire.AutoComplete();
+		StartCoroutine(AutoCompleteSubtask(() =>
+		{
+			solitaire.global_freeze = false;
+			EndGame();
+		}));
+	}
+	
+	private IEnumerator AutoCompleteSubtask(System.Action callback = null){
+		while (!solitaire.IsGameEnd()){
+			bool success = solitaire.AutoComplete();
+			if (!success){
+				if (solitaire.deck.Count == 0){
+					solitaire.DeckRestack();
+					click_count++;
+				}
+				solitaire.DeckCardActions(solitaire.deck_pos.transform.Find(solitaire.deck[solitaire.deck.Count-1]).GetComponent<Card>());
+			}
+			click_count++;
+			yield return new WaitForSeconds(0.08f);
+		}
+		callback?.Invoke();
 	}
 	
 	public void GenerateLeaderboard(){

@@ -27,7 +27,7 @@ public class Deck : MonoBehaviour
 		if (hit){
 			if (hit.collider.transform.name == "deck_bottom"){
 				solitaire.DeckRestack();
-				UIM.score -= 10;
+				UIM.score -= 30;
 				UIM.click_count++;
 				UIM.undo_count += (UIM.undo_count<15)?1:0;
 			}

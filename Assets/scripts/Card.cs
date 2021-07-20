@@ -17,8 +17,8 @@ public class Card : MonoBehaviour
 	private Vector3 original_pos;
 	private int limit_bottom;
 	private int position_in_bottom;
-	private bool movable;
-	private bool freeze_action;
+	public bool movable;
+	public bool freeze_action;
 	private int face_up_num;
 	private bool is_face_up_num_find;
 	private List<string> card_list;
@@ -133,10 +133,11 @@ public class Card : MonoBehaviour
 					}
 					
 					card_list.Clear();
-					card_list.Add(transform.name);
 					for (int j = position_in_bottom + 1; j < limit_bottom; j++) //set the parents of the lower cards to the one we move
 					{
 						Transform card_tmp = solitaire.bottom_pos[location - 6].transform.Find(solitaire.bottoms[location - 6][j]);
+						card_tmp.GetComponent<Card>().movable = false;
+						card_tmp.GetComponent<Card>().freeze_action = true;
 						card_tmp.parent = transform;
 						card_list.Add(card_tmp.name);
 					}
@@ -148,17 +149,25 @@ public class Card : MonoBehaviour
 	}
 	
 	void OnMouseDrag(){
-		if (!freeze_action)
-			if (is_face_up)
+		if (!freeze_action && is_face_up){
+			if (location == 1){
+				if (transform.name == solitaire.deck_pile[solitaire.deck_pile.Count-1])
+					transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0)) + offset;
+			}
+			else
 				transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0)) + offset;
+		}
 	}
 	
 	void OnMouseUp(){
 		bool success = false;
 		bool auto = false;
+		if (location == 1)
+			if (transform.name != solitaire.deck_pile[solitaire.deck_pile.Count-1])
+				freeze_action = true;
 		if (!freeze_action){
 			if (is_face_up)
-				transform.position -= new Vector3(0, 0, -5);
+					transform.position -= new Vector3(0, 0, -5);
 			if (Vector3.Distance(original_pos, transform.position) < 0.2){
 				auto = true;
 				if (location == 0)
@@ -194,7 +203,7 @@ public class Card : MonoBehaviour
 								solitaire.undo_stack.Push(new string[] {(num+2).ToString(), transform.name, location.ToString(), "0"});
 								
 								Vector3 shift = new Vector3(0, 0, -0.2f);
-								StartCoroutine(MoveTo(solitaire.top_pos[num].transform.position, shift));
+								StartCoroutine(MoveTo(solitaire.top_pos[num].transform.position, shift, true));
 								transform.parent = solitaire.top_pos[num].transform;
 								location = num + 2;
 
@@ -225,7 +234,7 @@ public class Card : MonoBehaviour
 
 									//Moving
 									Vector3 shift = new Vector3(0, 0, -0.2f);
-									StartCoroutine(MoveTo(solitaire.top_pos[num].transform.position, shift));
+									StartCoroutine(MoveTo(solitaire.top_pos[num].transform.position, shift, true));
 									transform.parent = solitaire.top_pos[num].transform;
 
 									solitaire.bottoms[location - 6].Remove(transform.name);
@@ -249,7 +258,7 @@ public class Card : MonoBehaviour
 								solitaire.undo_stack.Push(new string[] {(num+6).ToString(), transform.name, location.ToString(), "0"});
 								
 								Vector3 shift = new Vector3(0, 0, -0.2f);
-								StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift));
+								StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift, true));
 								transform.parent = solitaire.bottom_pos[num].transform;
 								location = num + 6;
 								
@@ -264,7 +273,7 @@ public class Card : MonoBehaviour
 								solitaire.undo_stack.Push(new string[] {(num+6).ToString(), transform.name, location.ToString(), "0"});
 								
 								Vector3 shift = new Vector3(0, 0, -0.2f);
-								StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift));
+								StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift, true));
 								transform.parent = solitaire.bottom_pos[num].transform;
 								
 								solitaire.tops[location - 2].Remove(transform.name);
@@ -291,23 +300,32 @@ public class Card : MonoBehaviour
 									
 									solitaire.undo_stack.Push(new string[] {(num+6).ToString(), transform.name, location.ToString(), is_flip?"1":"0"});
 
-									Vector3 shift = new Vector3(0, 0, -0.2f);
-									StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift, () =>
+									for (int j = position_in_bottom + 1; j < limit_bottom; j++)
 									{
-										for (int j = position_in_bottom + 1; j < limit_bottom; j++)
-										{
-											Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
-											card_tmp.parent = solitaire.bottom_pos[num].transform;
-											card_tmp.GetComponent<Card>().location = num + 6;
-										}
+										Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
+										card_tmp.GetComponent<Card>().movable = true;
+										card_tmp.GetComponent<Card>().freeze_action = false;
+										card_tmp.GetComponent<Card>().location = num + 6;
+									}
 
-										transform.parent = solitaire.bottom_pos[num].transform;
+									solitaire.bottoms[location - 6].Remove(transform.name);
+									solitaire.bottoms[num].Add(transform.name);
+									foreach (string card in card_list)
+									{
+										solitaire.bottoms[location - 6].Remove(card);
+										solitaire.bottoms[num].Add(card);
+									}
+									location = num + 6;
+									
+									Vector3 shift = new Vector3(0, 0, -0.2f);
+									StartCoroutine(MoveTo(solitaire.bottom_pos[num].transform.position, shift, true, () =>
+									{
 										foreach (string card in card_list)
 										{
-											solitaire.bottoms[location - 6].Remove(card);
-											solitaire.bottoms[num].Add(card);
+											Transform card_tmp = transform.Find(card);
+											card_tmp.parent = solitaire.bottom_pos[num].transform;
 										}
-										location = num + 6;
+										transform.parent = solitaire.bottom_pos[num].transform;
 									}));
 									success = true;
 									break;
@@ -319,7 +337,7 @@ public class Card : MonoBehaviour
 			}
 			if (!success){
 				if (is_face_up)
-					StartCoroutine(MoveTo(original_pos, new Vector3(0,0,0), () =>
+					StartCoroutine(MoveTo(original_pos, new Vector3(0,0,0), false, () =>
 					{
 						if (auto){
 							StartCoroutine(Shake(() =>
@@ -328,6 +346,8 @@ public class Card : MonoBehaviour
 									for (int j = position_in_bottom + 1; j < limit_bottom; j++)
 									{
 										Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
+										card_tmp.GetComponent<Card>().movable = true;
+										card_tmp.GetComponent<Card>().freeze_action = false;
 										card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
 									}
 								}
@@ -338,6 +358,8 @@ public class Card : MonoBehaviour
 								for (int j = position_in_bottom + 1; j < limit_bottom; j++)
 								{
 									Transform card_tmp = transform.Find(solitaire.bottoms[location - 6][j]);
+									card_tmp.GetComponent<Card>().movable = true;
+									card_tmp.GetComponent<Card>().freeze_action = false;
 									card_tmp.parent = solitaire.bottom_pos[location - 6].transform;
 								}
 							}
@@ -358,54 +380,63 @@ public class Card : MonoBehaviour
 		}
 		else
 			freeze_action = false;
+		if (location == 1)
+			if (transform.name != solitaire.deck_pile[solitaire.deck_pile.Count-1])
+				freeze_action = false;
 	}
 
-    public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, System.Action callback = null)
+    public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, bool disable, System.Action callback = null)
     {
+		transform.GetComponent<BoxCollider2D>().enabled = false;
 		movable = false;
-        float move_period;
-        Vector2 start_position = transform.position;
-        Vector2 end_position = new Vector2(destiny.x + shift.x, destiny.y + shift.y);
+		float move_period;
+		Vector2 start_position = transform.position;
+		Vector2 end_position = new Vector2(destiny.x + shift.x, destiny.y + shift.y);
 		if (Vector2.Distance(start_position, end_position) < 0.2f)
 			move_period = 0.05f;
 		else
 			move_period = 0.2f;
-        for (float ratio = 0f; ratio < 1;ratio += Time.deltaTime / move_period)
-        {
-            transform.position = Vector2.Lerp(start_position, end_position, ratio);
-            transform.position += new Vector3(0, 0, -5f);
-            yield return null;
-        }
-        transform.position = destiny + shift;
+		for (float ratio = 0f; ratio < 1f;ratio += Time.deltaTime / move_period)
+		{
+			transform.position = Vector2.Lerp(start_position, end_position, ratio);
+			transform.position += new Vector3(0, 0, -5f);
+			yield return null;
+		}
+		transform.position = destiny + shift;
 		callback?.Invoke();
+		if (disable)
+			transform.GetComponent<BoxCollider2D>().enabled = true;
 		movable = true;
     }
 
     public IEnumerator Shake(System.Action callback = null)
     {
+		transform.GetComponent<BoxCollider2D>().enabled = false;
 		AM.Play("card_shake");
-        Vector3 shaking_vector = new Vector3(0.02f, 0, 0);
-        for (int i = 0; i < 3; i++)
-        {
-            transform.position -= shaking_vector;
-            yield return new WaitForSeconds(0.01f);
-        }
-        for (int i = 0; i < 6; i++)
-        {
-            transform.position += shaking_vector;
-            yield return new WaitForSeconds(0.01f);
-        }
-        for (int i = 0; i < 6; i++)
-        {
-            transform.position -= shaking_vector;
-            yield return new WaitForSeconds(0.01f);
-        }
-        for (int i = 0; i < 3; i++)
-        {
-            transform.position += shaking_vector;
-            yield return new WaitForSeconds(0.01f);
-        }
+		Vector3 shaking_vector = new Vector3(0.02f, 0, 0);
+		for (int i = 0; i < 3; i++)
+		{
+			transform.position -= shaking_vector;
+			yield return new WaitForSeconds(0.01f);
+		}
+		for (int i = 0; i < 6; i++)
+		{
+			transform.position += shaking_vector;
+			yield return new WaitForSeconds(0.01f);
+		}
+		for (int i = 0; i < 6; i++)
+		{
+			transform.position -= shaking_vector;
+			yield return new WaitForSeconds(0.01f);
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			transform.position += shaking_vector;
+			yield return new WaitForSeconds(0.01f);
+		}
 		callback?.Invoke();
+		yield return new WaitForSeconds(0.3f);
+		transform.GetComponent<BoxCollider2D>().enabled = true;
     }
 
     public IEnumerator Glow()
@@ -413,7 +444,7 @@ public class Card : MonoBehaviour
 		for (int i=0; i<3; i++){
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color += new Color(0, 0, 0, 0.1f);
-				if (!movable){
+				if (!movable || solitaire.stop_glowing){
 					glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, glowing.GetComponent<SpriteRenderer>().color.a);
 					yield break;
 				}
@@ -421,13 +452,13 @@ public class Card : MonoBehaviour
 			}
 			for (int j=0; j<8; j++){
 				glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, 0.1f);
-				if (!movable){
+				if (!movable || solitaire.stop_glowing){
 					glowing.GetComponent<SpriteRenderer>().color -= new Color(0, 0, 0, glowing.GetComponent<SpriteRenderer>().color.a);
 					yield break;
 				}
 				yield return new WaitForSeconds(0.06f);
 			}
-			if (!movable)
+			if (!movable || solitaire.stop_glowing)
 				yield break;
 		}
     }

@@ -39,6 +39,7 @@ public class Solitaire : MonoBehaviour
 	private bool bottom_to_top = false;
 	
 	public bool global_freeze;
+	public bool stop_glowing;
 	
 	private AudioManager AM;
 	
@@ -166,7 +167,7 @@ public class Solitaire : MonoBehaviour
     public void DeckCardActions(Card card_obj)
     {
         card_obj.transform.parent = deck_pile_pos.transform;
-        StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location * 0.2f)));
+        StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location * 0.2f), true));
 
         card_obj.is_face_up = true;
         card_obj.location = 1;
@@ -179,13 +180,14 @@ public class Solitaire : MonoBehaviour
 
     public void DeckRestack()
     {
+		AM.Play("card_stack");
         deck.Clear();
 		float offset = 0.2f;
         for (int i=deck_pile.Count-1; i>=0; i--)
         {
 			Card card_obj = deck_pile_pos.transform.Find(deck_pile[i]).GetComponent<Card>();
 			card_obj.transform.parent = deck_pos.transform;
-			StartCoroutine(card_obj.MoveTo(deck_pos.transform.position, new Vector3(0, 0, -offset)));
+			StartCoroutine(card_obj.MoveTo(deck_pos.transform.position, new Vector3(0, 0, -offset), true));
 
 			card_obj.is_face_up = false;
 			card_obj.location = 0;
@@ -215,7 +217,7 @@ public class Solitaire : MonoBehaviour
 					{
 						if (move){
 							card_obj.transform.parent = bottom_pos[i - 6].transform;
-							StartCoroutine(card_obj.MoveTo(bottom_pos[i - 6].transform.position, new Vector3(0, 0, -0.2f)));
+							StartCoroutine(card_obj.MoveTo(bottom_pos[i - 6].transform.position, new Vector3(0, 0, -0.2f), true));
 
 							card_obj.location = i;
 							tops[location-2].Remove(card_obj.name);
@@ -254,7 +256,7 @@ public class Solitaire : MonoBehaviour
 							if (move){
 								card_obj.transform.parent = bottom_pos[i - 6].transform;
 								int length = bottoms[i-6].Count;
-								StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f)));
+								StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true));
 
 								card_obj.location = i;
 								tops[location-2].Remove(card_obj.name);
@@ -329,7 +331,7 @@ public class Solitaire : MonoBehaviour
 
 								//Moving
 								card_obj.transform.parent = top_pos[i - 2].transform;
-								StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -0.2f)));
+								StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -0.2f), true));
 
 								card_obj.location = i;
 								bottoms[location - 6].Remove(card_obj.name);
@@ -371,7 +373,7 @@ public class Solitaire : MonoBehaviour
 									//Moving
 									card_obj.transform.parent = top_pos[i - 2].transform;
 									int length = tops[i-2].Count;
-									StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -(length+1)*0.2f)));
+									StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -(length+1)*0.2f), true));
 
 									card_obj.location = card_check_obj.location;
 									bottoms[location - 6].Remove(card_obj.name);
@@ -427,11 +429,13 @@ public class Solitaire : MonoBehaviour
 									bottoms[i - 6].Add(card);
 								}
 
-								StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, 0, -0.2f), () =>
+								StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, 0, -0.2f), true, () =>
 								{
 									foreach (string card in tmp_list)
 									{
 										Transform card_tmp = card_obj.transform.Find(card);
+										card_tmp.GetComponent<Card>().movable = true;
+										card_tmp.GetComponent<Card>().freeze_action = false;
 										card_tmp.parent = bottom_pos[i - 6].transform;
 									}
 									card_obj.transform.parent = bottom_pos[i - 6].transform;
@@ -496,11 +500,13 @@ public class Solitaire : MonoBehaviour
 										bottoms[i - 6].Add(card);
 									}
 									
-									StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), () =>
+									StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true, () =>
 									{
 										foreach (string card in tmp_list)
 										{
 											Transform card_tmp = card_obj.transform.Find(card);
+											card_tmp.GetComponent<Card>().movable = true;
+											card_tmp.GetComponent<Card>().freeze_action = false;
 											card_tmp.parent = bottom_pos[i - 6].transform;
 										}
 										card_obj.transform.parent = bottom_pos[i - 6].transform;
@@ -526,7 +532,7 @@ public class Solitaire : MonoBehaviour
 					{
 						if (move){
 							//Moving
-							StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -0.2f)));
+							StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -0.2f), true));
 							card_obj.transform.parent = top_pos[i - 2].transform;
 
 							card_obj.location = i;
@@ -554,7 +560,7 @@ public class Solitaire : MonoBehaviour
 								//Moving
 								card_obj.transform.parent = top_pos[i - 2].transform;
 								int length = tops[i-2].Count;
-								StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -(length+1)*0.2f)));
+								StartCoroutine(card_obj.MoveTo(top_pos[i-2].transform.position, new Vector3(0, 0, -(length+1)*0.2f), true));
 
 								card_obj.location = card_check_obj.location;
 								deck_pile.Remove(card_obj.name);
@@ -577,7 +583,7 @@ public class Solitaire : MonoBehaviour
                     if (value == 13)
                     {
 						if (move){
-							StartCoroutine(card_obj.MoveTo(bottom_pos[i - 6].transform.position, new Vector3(0, 0, -0.2f)));
+							StartCoroutine(card_obj.MoveTo(bottom_pos[i - 6].transform.position, new Vector3(0, 0, -0.2f), true));
 							card_obj.transform.parent = bottom_pos[i - 6].transform;
 							card_obj.location = i;
 
@@ -616,7 +622,7 @@ public class Solitaire : MonoBehaviour
 							if (move){
 								card_obj.transform.parent = bottom_pos[i - 6].transform;
 								int length = bottoms[i-6].Count;
-								StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f)));
+								StartCoroutine(card_obj.MoveTo(bottom_pos[i-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true));
 
 								card_obj.location = i;
 								deck_pile.Remove(card_obj.name);
@@ -651,7 +657,7 @@ public class Solitaire : MonoBehaviour
 							//Moving
 							card_obj.transform.parent = top_pos[card_other.location - 2].transform;
 							int length = tops[card_other.location - 2].Count;
-							StartCoroutine(card_obj.MoveTo(top_pos[card_other.location - 2].transform.position, new Vector3(0, 0, -(length+1)*0.2f)));
+							StartCoroutine(card_obj.MoveTo(top_pos[card_other.location - 2].transform.position, new Vector3(0, 0, -(length+1)*0.2f), true));
 
 							card_obj.location = card_other.location;
 							deck_pile.Remove(card_obj.name);
@@ -691,7 +697,7 @@ public class Solitaire : MonoBehaviour
 							
                             card_obj.transform.parent = bottom_pos[card_other.location - 6].transform;
 							int length = bottoms[card_other.location - 6].Count;
-                            StartCoroutine(card_obj.MoveTo(bottom_pos[card_other.location - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f)));
+                            StartCoroutine(card_obj.MoveTo(bottom_pos[card_other.location - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true));
 
                             card_obj.location = card_other.location;
                             deck_pile.Remove(card_obj.name);
@@ -734,7 +740,7 @@ public class Solitaire : MonoBehaviour
 							
                             card_obj.transform.parent = bottom_pos[card_other.location - 6].transform;
 							int length = bottoms[card_other.location - 6].Count;
-                            StartCoroutine(card_obj.MoveTo(bottom_pos[card_other.location - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f)));
+                            StartCoroutine(card_obj.MoveTo(bottom_pos[card_other.location - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true));
 
                             tops[card_obj.location-2].Remove(card_obj.name);
                             bottoms[card_other.location - 6].Add(card_obj.name);
@@ -799,7 +805,7 @@ public class Solitaire : MonoBehaviour
 							//Moving
 							card_obj.transform.parent = top_pos[card_other.location - 2].transform;
 							int length = tops[card_other.location - 2].Count;
-							StartCoroutine(card_obj.MoveTo(top_pos[card_other.location - 2].transform.position, new Vector3(0, 0, -(length+1)*0.2f)));
+							StartCoroutine(card_obj.MoveTo(top_pos[card_other.location - 2].transform.position, new Vector3(0, 0, -(length+1)*0.2f), true));
 
 							bottoms[card_obj.location - 6].Remove(card_obj.name);
 							tops[card_other.location - 2].Add(card_obj.name);
@@ -864,11 +870,13 @@ public class Solitaire : MonoBehaviour
 							}
 							card_obj.location = card_other.location;
 							
-							StartCoroutine(card_obj.MoveTo(bottom_pos[card_other.location - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), () =>
+							StartCoroutine(card_obj.MoveTo(bottom_pos[card_other.location - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true, () =>
 							{
 								foreach (string card in tmp_list)
 								{
 									Transform card_tmp = card_obj.transform.Find(card);
+									card_tmp.GetComponent<Card>().movable = true;
+									card_tmp.GetComponent<Card>().freeze_action = false;
 									card_tmp.parent = bottom_pos[card_other.location - 6].transform;
 								}
 								card_obj.transform.parent = bottom_pos[card_other.location - 6].transform;
@@ -897,7 +905,7 @@ public class Solitaire : MonoBehaviour
 		bool valid_action;
 		Card tmp_card;
 		
-		for (int i=0; i<7; i++){
+		for (int i=0; i<7; i++){ //bottom
 			bool is_last = false;
 			for (int j=0; j<bottoms[i].Count; j++){
 				tmp_card = bottom_pos[i].transform.Find(bottoms[i][j]).GetComponent<Card>();
@@ -922,7 +930,8 @@ public class Solitaire : MonoBehaviour
 				tmp_card = bottom_pos[i].transform.Find(bottoms[i][bottoms[i].Count-1]).GetComponent<Card>();
 				valid_action = AutoStack(tmp_card, false);
 				if (bottom_to_top && valid_action){
-					StartCoroutine(tmp_card.Glow());
+					if (allow_second_check)
+						StartCoroutine(tmp_card.Glow());
 					return true;
 				}
 			}
@@ -1000,6 +1009,8 @@ public class Solitaire : MonoBehaviour
 						bottoms[hint_position].Remove(tmp_card.name);
 						
 						if (second_check && !bottom_to_top){
+							print("here");
+							print(tmp_card.name);
 							StartCoroutine(tmp_card.Glow());
 							return true;
 						}
@@ -1022,7 +1033,7 @@ public class Solitaire : MonoBehaviour
 			{
 				Card card_obj = deck_pos.transform.Find(deck[i]).GetComponent<Card>();
 				card_obj.transform.parent = deck_pile_pos.transform;
-				StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location*0.2f)));
+				StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location*0.2f), true));
 
 				card_obj.is_face_up = true;
 				card_obj.location = 1;
@@ -1036,10 +1047,10 @@ public class Solitaire : MonoBehaviour
 			Card card_obj = FindByPosition(location, regret_move[1]).GetComponent<Card>();
 			card_obj.transform.parent = deck_pos.transform;
 			if (deck.Count == 0)
-				StartCoroutine(card_obj.MoveTo(deck_pos.transform.position, new Vector3(0, 0, -0.2f)));
+				StartCoroutine(card_obj.MoveTo(deck_pos.transform.position, new Vector3(0, 0, -0.2f), true));
 			else{
 				Card card_other_obj = deck_pos.transform.Find(deck[deck.Count-1]).GetComponent<Card>();
-				StartCoroutine(card_obj.MoveTo(deck_pos.transform.position, new Vector3(0, 0, -(deck.Count+1)*0.2f)));
+				StartCoroutine(card_obj.MoveTo(deck_pos.transform.position, new Vector3(0, 0, -(deck.Count+1)*0.2f), true));
 			}
 			
 			card_obj.is_face_up = false;
@@ -1054,9 +1065,9 @@ public class Solitaire : MonoBehaviour
 			if (des == 1){ //from deck pile to top
 				card_obj.transform.parent = deck_pile_pos.transform;
 				if (deck_pile.Count == 0)
-					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, 0)));
+					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, 0), true));
 				else
-					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location*0.2f)));
+					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location*0.2f), true));
 				deck_location++;
 				
 				card_obj.location = des;
@@ -1069,7 +1080,7 @@ public class Solitaire : MonoBehaviour
 					bottom_pos[des-6].transform.Find(bottoms[des-6][length-1]).GetComponent<Card>().is_face_up = false;
 				
 				card_obj.transform.parent = bottom_pos[des-6].transform;
-				StartCoroutine(card_obj.MoveTo(bottom_pos[des-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f)));
+				StartCoroutine(card_obj.MoveTo(bottom_pos[des-6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true));
 
 				card_obj.location = des;
 				tops[location-2].Remove(card_obj.name);
@@ -1081,9 +1092,9 @@ public class Solitaire : MonoBehaviour
 			if (des == 1){ //from deck pile to bottom
 				card_obj.transform.parent = deck_pile_pos.transform;
 				if (deck_pile.Count == 0)
-					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, 0)));
+					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, 0), true));
 				else
-					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location*0.2f)));
+					StartCoroutine(card_obj.MoveTo(deck_pile_pos.transform.position, new Vector3(0, 0, -deck_location*0.2f), true));
 				deck_location++;
 				
 				card_obj.location = des;
@@ -1092,7 +1103,7 @@ public class Solitaire : MonoBehaviour
 			}
 			else if (des > 1 && des < 6){ //from top to bottom
 				card_obj.transform.parent = top_pos[des-2].transform;
-				StartCoroutine(card_obj.MoveTo(top_pos[des-2].transform.position, new Vector3(0, 0, -(tops[des-2].Count+1)*0.2f)));
+				StartCoroutine(card_obj.MoveTo(top_pos[des-2].transform.position, new Vector3(0, 0, -(tops[des-2].Count+1)*0.2f), true));
 
 				card_obj.location = des;
 				bottoms[location-6].Remove(card_obj.name);
@@ -1115,13 +1126,10 @@ public class Solitaire : MonoBehaviour
 				{
 					Transform card_tmp = bottom_pos[location - 6].transform.Find(bottoms[location - 6][i]);
 					card_tmp.parent = card_obj.transform;
-					card_list.Add(card_tmp.name);
-				}
-				
-				for (int i = position_in_bottom + 1; i < limit_bottom; i++)
-				{
-					Transform card_tmp = card_obj.transform.Find(bottoms[location - 6][i]);
 					card_tmp.GetComponent<Card>().location = des;
+					card_tmp.GetComponent<Card>().movable = false;
+					card_tmp.GetComponent<Card>().freeze_action = true;
+					card_list.Add(card_tmp.name);
 				}
 				card_obj.location = des;
 				bottoms[location - 6].Remove(card_obj.name);
@@ -1132,11 +1140,13 @@ public class Solitaire : MonoBehaviour
 					bottoms[des - 6].Add(card);
 				}
 				
-				StartCoroutine(card_obj.MoveTo(bottom_pos[des - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), () =>
+				StartCoroutine(card_obj.MoveTo(bottom_pos[des - 6].transform.position, new Vector3(0, -length*0.3f, -(length+1)*0.2f), true, () =>
 				{
 					foreach (string card in card_list)
 					{
 						Transform card_tmp = card_obj.transform.Find(card);
+						card_tmp.GetComponent<Card>().movable = true;
+						card_tmp.GetComponent<Card>().freeze_action = false;
 						card_tmp.parent = bottom_pos[des - 6].transform;
 					}
 					card_obj.transform.parent = bottom_pos[des - 6].transform;
@@ -1146,28 +1156,39 @@ public class Solitaire : MonoBehaviour
     }
 	
 	public void Initialize(){
-		foreach(string name in deck)
-			Destroy(deck_pos.transform.Find(name).gameObject);
-		deck.Clear();
+		stop_glowing = true;
 		
-		foreach(string name in deck_pile)
-			Destroy(deck_pile_pos.transform.Find(name).gameObject);
-		deck_pile.Clear();
-		
-		for (int i=0; i<4; i++){
-			foreach(string name in tops[i])
-				Destroy(top_pos[i].transform.Find(name).gameObject);
-			tops[i].Clear();
-		}
-		for (int i=0; i<7; i++){
-			foreach(string name in bottoms[i])
-				Destroy(bottom_pos[i].transform.Find(name).gameObject);
-			bottoms[i].Clear();
-		}
-		undo_stack.Clear();
-		global_freeze = false;
-		PlayCards();
+		StartCoroutine(Stop(0.1f, ()=>{
+			foreach(string name in deck)
+				Destroy(deck_pos.transform.Find(name).gameObject);
+			deck.Clear();
+			
+			foreach(string name in deck_pile)
+				Destroy(deck_pile_pos.transform.Find(name).gameObject);
+			deck_pile.Clear();
+			
+			for (int i=0; i<4; i++){
+				foreach(string name in tops[i])
+					Destroy(top_pos[i].transform.Find(name).gameObject);
+				tops[i].Clear();
+			}
+			for (int i=0; i<7; i++){
+				foreach(string name in bottoms[i])
+					Destroy(bottom_pos[i].transform.Find(name).gameObject);
+				bottoms[i].Clear();
+			}
+			undo_stack.Clear();
+			global_freeze = false;
+			stop_glowing = false;
+			PlayCards();
+		}));
 	}
+	
+	private IEnumerator Stop(float delay_time, System.Action callback = null)
+    {
+		yield return new WaitForSeconds(delay_time);
+		callback?.Invoke();
+    }
 	
 	public bool IsGameEnd(){
 		if (deck.Count != 0)
@@ -1189,7 +1210,21 @@ public class Solitaire : MonoBehaviour
 		return true;
 	}
 	
-	public void AutoComplete(){
-		
+	public bool AutoComplete(){
+		for (int i=0; i<7; i++){
+			if (bottoms[i].Count != 0){
+				bool validity = AutoStack(bottom_pos[i].transform.Find(bottoms[i][bottoms[i].Count-1]).GetComponent<Card>(), false);
+				if (validity && bottom_to_top){
+					AutoStack(bottom_pos[i].transform.Find(bottoms[i][bottoms[i].Count-1]).GetComponent<Card>(), true);
+					return true;
+				}
+			}
+		}
+		if (deck_pile.Count != 0){
+			bool validity = AutoStack(deck_pile_pos.transform.Find(deck_pile[deck_pile.Count-1]).GetComponent<Card>(), true);
+			if (validity)
+				return true;
+		}
+		return false;
 	}
 }
