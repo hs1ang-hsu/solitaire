@@ -337,6 +337,11 @@ public class Solitaire : MonoBehaviour
 								bottoms[location - 6].Remove(card_obj.name);
 								tops[i - 2].Add(card_obj.name);
 								
+								foreach (string card in bottoms[location - 6]){
+									Transform card_tmp = bottom_pos[location - 6].transform.Find(card);
+									card_tmp.GetComponent<BoxCollider2D>().enabled = true;
+								}
+								
 								UIM.score += 10;
 								undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
 							}
@@ -378,6 +383,11 @@ public class Solitaire : MonoBehaviour
 									card_obj.location = card_check_obj.location;
 									bottoms[location - 6].Remove(card_obj.name);
 									tops[i - 2].Add(card_obj.name);
+									
+									foreach (string card in bottoms[location - 6]){
+										Transform card_tmp = bottom_pos[location - 6].transform.Find(card);
+										card_tmp.GetComponent<BoxCollider2D>().enabled = true;
+									}
 									
 									UIM.score += 10;
 									undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
@@ -434,9 +444,12 @@ public class Solitaire : MonoBehaviour
 									foreach (string card in tmp_list)
 									{
 										Transform card_tmp = card_obj.transform.Find(card);
-										card_tmp.GetComponent<Card>().movable = true;
-										card_tmp.GetComponent<Card>().freeze_action = false;
+										card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 										card_tmp.parent = bottom_pos[i - 6].transform;
+									}
+									foreach (string card in bottoms[location-6]){
+										Transform card_tmp = bottom_pos[location - 6].transform.Find(card);
+										card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 									}
 									card_obj.transform.parent = bottom_pos[i - 6].transform;
 									undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
@@ -505,9 +518,12 @@ public class Solitaire : MonoBehaviour
 										foreach (string card in tmp_list)
 										{
 											Transform card_tmp = card_obj.transform.Find(card);
-											card_tmp.GetComponent<Card>().movable = true;
-											card_tmp.GetComponent<Card>().freeze_action = false;
+											card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 											card_tmp.parent = bottom_pos[i - 6].transform;
+										}
+										foreach (string card in bottoms[location - 6]){
+											Transform card_tmp = bottom_pos[location - 6].transform.Find(card);
+											card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 										}
 										card_obj.transform.parent = bottom_pos[i - 6].transform;
 										undo_stack.Push(new string[] {i.ToString(), card_obj.name, location.ToString(), is_flip?"1":"0"});
@@ -875,9 +891,12 @@ public class Solitaire : MonoBehaviour
 								foreach (string card in tmp_list)
 								{
 									Transform card_tmp = card_obj.transform.Find(card);
-									card_tmp.GetComponent<Card>().movable = true;
-									card_tmp.GetComponent<Card>().freeze_action = false;
+									card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 									card_tmp.parent = bottom_pos[card_other.location - 6].transform;
+								}
+								foreach (string card in bottoms[card_obj.location - 6]){
+									Transform card_tmp = bottom_pos[card_obj.location - 6].transform.Find(card);
+									card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 								}
 								card_obj.transform.parent = bottom_pos[card_other.location - 6].transform;
 							}
@@ -1127,9 +1146,12 @@ public class Solitaire : MonoBehaviour
 					Transform card_tmp = bottom_pos[location - 6].transform.Find(bottoms[location - 6][i]);
 					card_tmp.parent = card_obj.transform;
 					card_tmp.GetComponent<Card>().location = des;
-					card_tmp.GetComponent<Card>().movable = false;
-					card_tmp.GetComponent<Card>().freeze_action = true;
+					card_tmp.GetComponent<BoxCollider2D>().enabled = false;
 					card_list.Add(card_tmp.name);
+				}
+				for (int i = 0; i < position_in_bottom; i++){
+					Transform card_tmp = bottom_pos[location - 6].transform.Find(bottoms[location - 6][i]);
+					card_tmp.GetComponent<BoxCollider2D>().enabled = false;
 				}
 				card_obj.location = des;
 				bottoms[location - 6].Remove(card_obj.name);
@@ -1145,10 +1167,14 @@ public class Solitaire : MonoBehaviour
 					foreach (string card in card_list)
 					{
 						Transform card_tmp = card_obj.transform.Find(card);
-						card_tmp.GetComponent<Card>().movable = true;
-						card_tmp.GetComponent<Card>().freeze_action = false;
+						card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 						card_tmp.parent = bottom_pos[des - 6].transform;
 					}
+					foreach (string card in bottoms[location - 6]){
+						Transform card_tmp = bottom_pos[location - 6].transform.Find(card);
+						card_tmp.GetComponent<BoxCollider2D>().enabled = true;
+					}
+						
 					card_obj.transform.parent = bottom_pos[des - 6].transform;
 				}));
 			}
