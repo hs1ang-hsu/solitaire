@@ -364,6 +364,7 @@ public class Card : MonoBehaviour
 								}
 							}
 						}
+						GetComponent<BoxCollider2D>().enabled = true;
 					}));
 			}
 			else{
@@ -380,14 +381,11 @@ public class Card : MonoBehaviour
 		}
 		else
 			freeze_action = false;
-		if (location == 1)
-			if (transform.name != solitaire.deck_pile[solitaire.deck_pile.Count-1])
-				freeze_action = false;
 	}
 
     public IEnumerator MoveTo(Vector3 destiny, Vector3 shift, bool disable, System.Action callback = null)
     {
-		transform.GetComponent<BoxCollider2D>().enabled = false;
+		GetComponent<BoxCollider2D>().enabled = false;
 		movable = false;
 		float move_period;
 		Vector2 start_position = transform.position;
@@ -405,7 +403,7 @@ public class Card : MonoBehaviour
 		transform.position = destiny + shift;
 		callback?.Invoke();
 		if (disable)
-			transform.GetComponent<BoxCollider2D>().enabled = true;
+			GetComponent<BoxCollider2D>().enabled = true;
 		movable = true;
     }
 

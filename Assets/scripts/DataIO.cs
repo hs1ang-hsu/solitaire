@@ -10,7 +10,6 @@ public class DataIO : MonoBehaviour
     public PlayerData LoadPlayerData(){
 		PlayerData player_data;
 		string tmp_path = Path.Combine(Application.persistentDataPath, file_name + ".json");
-		print(tmp_path);
 		if (File.Exists(tmp_path)){
 			using (StreamReader stream = new StreamReader(tmp_path)){
 				string json = stream.ReadToEnd();

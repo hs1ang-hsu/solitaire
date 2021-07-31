@@ -6,7 +6,6 @@ public class UpdateCard : MonoBehaviour
 {
     public Sprite card_face;
     public Sprite[] card_back_list;
-	private Sprite card_back;
 
     private SpriteRenderer sprite_renderer;
     private Card card;
@@ -31,7 +30,6 @@ public class UpdateCard : MonoBehaviour
         }
         sprite_renderer = GetComponent<SpriteRenderer>();
         card = GetComponent<Card>();
-		card_back = card_back_list[solitaire.player_data.card_back_pref];
     }
 
     // Update is called once per frame
@@ -43,7 +41,7 @@ public class UpdateCard : MonoBehaviour
         }
         else
         {
-            sprite_renderer.sprite = card_back;
+            sprite_renderer.sprite = card_back_list[solitaire.player_data.card_back_pref];
         }
     }
 }

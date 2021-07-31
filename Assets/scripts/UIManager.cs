@@ -27,10 +27,10 @@ public class UIManager : MonoBehaviour
 	public GameObject auto_complete_menu;
 	
 	public int score;
-    public int click_count;
+	public int click_count;
 	public int undo_count;
-    private float time;
-    private bool game_start;
+	private float time;
+	private bool game_start;
 	private bool undo_delay;
 	public bool hint_delay;
 	private bool game_paused;
@@ -41,15 +41,15 @@ public class UIManager : MonoBehaviour
     void Start()
     {
 		score = 0;
-        click_count = 0;
+		click_count = 0;
 		undo_count = 0;
-        time = 0;
-        game_start = false;
+		time = 0;
+		game_start = false;
 		undo_delay = false;
 		hint_delay = false;
 		game_paused = false;
 		
-        solitaire = FindObjectOfType<Solitaire>();
+		solitaire = FindObjectOfType<Solitaire>();
 		//print(solitaire.player_data.sound_effect_volume);
     }
 
