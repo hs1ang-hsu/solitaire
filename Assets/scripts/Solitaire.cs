@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.U2D;
 
 public class Solitaire : MonoBehaviour
 {
-    public Sprite[] card_faces;
+    public List<Sprite> card_faces;
+	public SpriteAtlas atlas;
     public GameObject card_prefab;
     public GameObject[] top_pos;
     public GameObject[] bottom_pos;
@@ -13,6 +15,7 @@ public class Solitaire : MonoBehaviour
     public GameObject deck_pile_pos;
 
     public static string[] suits = new string[] { "C", "D", "H", "S" };
+	private string[] suits_atlas = new string[] { "club_", "diamond_", "heart_", "spade_"};
     public static string[] values = new string[] { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
     public List<string>[] bottoms;
     public List<string>[] tops;
@@ -48,6 +51,11 @@ public class Solitaire : MonoBehaviour
 	public PlayerData player_data;
 	public DataIO data_io;
 
+	void Awake(){
+		for (int i = 0; i < 4; i++)
+			for (int j = 1; j < 14; j++)
+				card_faces.Add(atlas.GetSprite(suits_atlas[i] + j.ToString()));
+	}
     // Start is called before the first frame update
     void Start()
     {

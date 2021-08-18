@@ -375,8 +375,8 @@ public class Card : MonoBehaviour
 									card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 								}
 							}
+							GetComponent<BoxCollider2D>().enabled = true;
 						}
-						GetComponent<BoxCollider2D>().enabled = true;
 					}));
 			}
 			else{
