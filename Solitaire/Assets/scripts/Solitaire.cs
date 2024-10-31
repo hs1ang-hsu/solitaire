@@ -878,6 +878,7 @@ public class Solitaire : MonoBehaviour
 							undo_stack.Push(new string[] {card_other.location.ToString(), card_obj.name, card_obj.location.ToString(), is_flip?"1":"0"});
 							int length = bottoms[card_other.location - 6].Count;
 							
+							// move card and its children
 							List<string> tmp_list = new List<string>();
 							for (int j = position_in_bottom + 1; j < limit_bottom; j++)
 							{
@@ -901,12 +902,13 @@ public class Solitaire : MonoBehaviour
 									Transform card_tmp = card_obj.transform.Find(card);
 									card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 									card_tmp.parent = bottom_pos[card_other.location - 6].transform;
-								}
-								foreach (string card in bottoms[card_obj.location - 6]){
-									Transform card_tmp = bottom_pos[card_obj.location - 6].transform.Find(card);
+                                }
+                                card_obj.transform.parent = bottom_pos[card_other.location - 6].transform;
+                                foreach (string card in bottoms[card_obj.location - 6])
+                                {
+                                    Transform card_tmp = bottom_pos[card_obj.location - 6].transform.Find(card);
 									card_tmp.GetComponent<BoxCollider2D>().enabled = true;
 								}
-								card_obj.transform.parent = bottom_pos[card_other.location - 6].transform;
 							}
 							));
 							return true;
