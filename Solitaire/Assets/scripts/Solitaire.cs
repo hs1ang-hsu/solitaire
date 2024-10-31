@@ -871,7 +871,8 @@ public class Solitaire : MonoBehaviour
 								{
 									Transform card_tmp = bottom_pos[card_obj.location - 6].transform.Find(bottoms[card_obj.location - 6][position_in_bottom - 1]);
 									card_tmp.GetComponent<Card>().is_face_up = true;
-									UIM.score += 5;
+                                    card_tmp.GetComponent<BoxCollider2D>().enabled = true;
+                                    UIM.score += 5;
 									is_flip = true;
 								}
 							}
